@@ -13,6 +13,11 @@ class HttpRequest:
         self.path = path
         self.headers = headers
         self.body = body
+        if self.body:
+            try:    # Если в запросе есть тело запроса, но в заголовке не указана его длинна, то указываем
+                headers["Content-Length"]
+            except KeyError:
+                headers["Content-Length"] = str(len(self.body))
         if token:
             self.token = token
         elif not username:  # Если не указан ни токен, ни логин (пароль при этом может отсутствовать)
@@ -27,8 +32,6 @@ class HttpRequest:
         if self.token:
             request_line += f"Authorization: Basic {self.token}\r\n"
         headers = "\r\n".join(f"{key}: {value}" for key, value in self.headers.items())
-        if self.body:
-            headers += f"\r\nContent-Length: {len(self.body)}"
         http_request = f"{request_line}{headers}\r\n\r\n{self.body}"
         return http_request.encode("utf-8")
 
@@ -60,13 +63,16 @@ class HttpResponse:
         self.status_message = status_message
         self.headers = headers
         self.body = body
+        if self.body:
+            try:    # Если в запросе есть тело запроса, но в заголовке не указана его длинна, то указываем
+                headers["Content-Length"]
+            except KeyError:
+                headers["Content-Length"] = str(len(self.body))
 
     def to_bytes(self) -> bytes:
         """Преобразует HTTP-ответ в последовательность байт."""
         status_line = f"HTTP/1.1 {self.status_code} {self.status_message}\r\n"
         headers = "\r\n".join(f"{key}: {value}" for key, value in self.headers.items())
-        if self.body:
-            headers += f"\r\nContent-Length: {len(self.body)}"
         http_response = f"{status_line}{headers}\r\n\r\n{self.body}"
         return http_response.encode("utf-8")
 

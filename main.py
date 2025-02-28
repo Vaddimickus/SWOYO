@@ -23,7 +23,7 @@ def send_request(host: str, message: bytes) -> bytes:
      :param message: Отправляемый HTTP запрос
     :return: Полученный ответ
     """
-    if host.split(':') != -1 and len(host.split(':')) > 1:
+    if host.split(':') != -1 and len(host.split(':')) > 2:
         host, port = host.rsplit(':', maxsplit=1)
         port = int(port)
     else:
@@ -36,7 +36,7 @@ def send_request(host: str, message: bytes) -> bytes:
         return s.recv(2048)
 
 
-def post_socket(host: str, path: str, username: str, password: str, sender: str, recipient: str, message: str) -> None:
+def post_socket(host: str, path: str, username: str, password: str, sender: str, recipient: str, message: str) -> str:
     """
     Отправляет сообщение через HTTP-запрос к указанному сервису
      :param host: Хост сервиса
@@ -46,6 +46,7 @@ def post_socket(host: str, path: str, username: str, password: str, sender: str,
      :param sender: Номер отправителя
      :param recipient: Номер получателя
      :param message: Текст сообщения
+     :return: Строка состоящая из кода, статуса и тела ответа
     """
     headers = {
         "Connection": "keep-alive",
@@ -59,8 +60,8 @@ def post_socket(host: str, path: str, username: str, password: str, sender: str,
     })
     request = HttpRequest("POST", host, path, headers, body, username, password)
     answer = HttpResponse.from_bytes(send_request(host, request.to_bytes()))
-    print(str(answer.status_code) + ' ' + str(answer.status_message) + ' ' + answer.body)
     LOGER.info(f"Ответ от сервиса: {answer}")
+    return str(answer.status_code) + ' ' + str(answer.status_message) + ' ' + answer.body
 
 
 if __name__ == '__main__':
@@ -85,4 +86,4 @@ if __name__ == '__main__':
     # На практике логин и пароль в лог файл не пишутся, но в рамках тестового задания - запись будет
     LOGER.info(f"Адресс хоста {host}, путь API {path}, логин {lgn}, пароль {psw}")
 
-    post_socket(host, path, lgn, psw, sender, recipient, message)
+    print(post_socket(host, path, lgn, psw, sender, recipient, message))
